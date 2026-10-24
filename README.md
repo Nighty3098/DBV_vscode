@@ -105,6 +105,7 @@ npm run build       # bundle extension, webview, CSS
 npm test            # 25 tests
 npm run test:coverage
 npm run compile     # TypeScript check
+npm run package
 ```
 
 Press `F5` to launch the Extension Development Host. See [CONTRIBUTING.md](CONTRIBUTING.md).
