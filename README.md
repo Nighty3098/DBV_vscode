@@ -70,6 +70,10 @@ Saved connection metadata is stored in VS Code's global state. Passwords are sto
 | `dbv.showNullAs`                | `NULL`  | Visual NULL marker.                         |
 | `dbv.autoConnect`               | `false` | Connect saved sessions on activation.       |
 
+## Logs and diagnostics
+
+DBV appends errors, warnings, and startup information to `dbv_code.log` in the operating system's temporary directory (for example, `/tmp/dbv_code.log` on Linux). The same entries are available in VS Code's **Output** panel under **DBV**. DBV does not deliberately log SQL text or connection passwords; database driver error details may contain information provided by the driver.
+
 ## Commands
 
 - `DBV: Add Database Connection`

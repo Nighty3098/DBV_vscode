@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import type { ConnectionConfig, SchemaInfo, TableRef } from '../shared/types';
 import type { ConnectionService } from './connectionService';
 import type { Driver } from './drivers/base';
+import { logger } from './logger';
 
 export class ConnectionItem extends vscode.TreeItem {
   constructor(
@@ -78,17 +79,17 @@ export class ConnectionsProvider implements vscode.TreeDataProvider<Node>, vscod
       return this.connections.list().map((config) => new ConnectionItem(config, this.connections.summary(config).connected));
     }
     if (element instanceof ConnectionItem) {
-      let driver: Driver;
       try {
-        driver = await this.connections.getDriver(element.config.id);
+        const driver: Driver = await this.connections.getDriver(element.config.id);
+        const schemas = await driver.listSchemas();
+        return schemas.map((schema) => new SchemaItem(element.config.id, schema, schema.tables.length));
       } catch (error) {
+        logger.error(`Could not load connection "${element.config.name}" in connections tree`, error);
         void vscode.window.showErrorMessage(
           `DBV: ${error instanceof Error ? error.message : String(error)}`,
         );
         return [];
       }
-      const schemas = await driver.listSchemas();
-      return schemas.map((schema) => new SchemaItem(element.config.id, schema, schema.tables.length));
     }
     if (element instanceof SchemaItem) {
       return element.schema.tables.map((table) => new TableItem(element.connectionId, table));

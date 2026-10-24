@@ -3,6 +3,7 @@ import type { TableRef } from '../shared/types';
 import type { ConnectionService } from './connectionService';
 import type { QueryHistoryStore } from './historyStore';
 import { WorkbenchSession } from './workbenchSession';
+import { logger } from './logger';
 import { webviewHtml } from './webviewHtml';
 
 export class TablePanelManager implements vscode.Disposable {
@@ -31,6 +32,7 @@ export class TablePanelManager implements vscode.Disposable {
     try {
       driver = await this.service.getDriver(connectionId);
     } catch (error) {
+      logger.error(`Could not open table "${table.name}"`, error);
       void vscode.window.showErrorMessage(
         `DBV: ${error instanceof Error ? error.message : String(error)}`,
       );

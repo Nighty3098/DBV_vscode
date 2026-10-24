@@ -17,6 +17,7 @@ import { limitSelect, splitSqlStatements } from '../../core/queryBuilder';
 import type { Mutation } from '../../core/mutations';
 import { serializeResult } from '../../core/serialization';
 import { quoteIdentifier, quoteQualified } from '../../core/identifiers';
+import { logger } from '../logger';
 
 interface MssqlColumnRow {
   COLUMN_NAME: string;
@@ -58,13 +59,17 @@ export class MssqlDriver extends BaseDriver {
       this.pool = pool;
       this.connected = true;
     } catch (error) {
-      await pool.close().catch(() => undefined);
+      await pool.close().catch((closeError: unknown) => {
+        logger.warn(`Could not clean up failed SQL Server connection "${this.config.name}"`, closeError);
+      });
       throw new Error(`SQL Server connection failed: ${errorMessage(error)}`);
     }
   }
 
   async close(): Promise<void> {
-    await this.pool?.close().catch(() => undefined);
+    await this.pool?.close().catch((error: unknown) => {
+      logger.warn(`Could not close SQL Server connection "${this.config.name}"`, error);
+    });
     this.pool = undefined;
     this.connected = false;
   }

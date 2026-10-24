@@ -8,6 +8,7 @@ import { ConnectionsProvider, ConnectionItem } from './connectionsTree';
 import { DatabaseEditorProvider } from './databaseEditorProvider';
 import { SqlEditorProvider } from './sqlEditorProvider';
 import { TablePanelManager } from './tablePanel';
+import { logger } from './logger';
 import { defaultPort } from '../core/identifiers';
 import { connectionEndpoint } from '../core/validation';
 
@@ -18,6 +19,16 @@ interface ConnectionArg {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  context.subscriptions.push(logger.initialize());
+  try {
+    activateExtension(context);
+  } catch (error) {
+    logger.error('Extension activation failed', error);
+    throw error;
+  }
+}
+
+function activateExtension(context: vscode.ExtensionContext): void {
   const store = new ConnectionStore(context);
   const service = new ConnectionService(store);
   const history = new QueryHistoryStore(context);
@@ -50,7 +61,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('dbv.addConnection', async () => {
+    registerCommand('dbv.addConnection', async () => {
       const config = await promptConnection();
       if (!config) return;
       const saved = await service.save(config.config, config.password);
@@ -58,7 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await connectAndReport(service, saved);
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.editConnection', async (arg?: ConnectionArg | ConnectionItem) => {
+    registerCommand('dbv.editConnection', async (arg?: ConnectionArg | ConnectionItem) => {
       const id = await selectConnectionId(service, arg, 'Choose a connection to edit');
       if (!id) return;
       const existing = service.getConfig(id);
@@ -68,7 +79,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await service.save({ ...updated.config, id }, updated.password);
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.removeConnection', async (arg?: ConnectionArg | ConnectionItem) => {
+    registerCommand('dbv.removeConnection', async (arg?: ConnectionArg | ConnectionItem) => {
       const id = await selectConnectionId(service, arg, 'Choose a connection to remove');
       if (!id) return;
       const config = service.getConfig(id);
@@ -82,24 +93,24 @@ export function activate(context: vscode.ExtensionContext): void {
       await service.remove(id);
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.connect', async (arg?: ConnectionArg | ConnectionItem) => {
+    registerCommand('dbv.connect', async (arg?: ConnectionArg | ConnectionItem) => {
       const id = await selectConnectionId(service, arg, 'Choose a connection to connect');
       if (!id) return;
       await setActive(id);
       await connectAndReport(service, service.getConfig(id));
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.disconnect', async (arg?: ConnectionArg | ConnectionItem) => {
+    registerCommand('dbv.disconnect', async (arg?: ConnectionArg | ConnectionItem) => {
       const id = await selectConnectionId(service, arg, 'Choose a connection to disconnect');
       if (!id) return;
       await service.disconnect(id);
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.refreshConnections', async () => {
+    registerCommand('dbv.refreshConnections', async () => {
       await service.refresh();
       treeProvider.refresh();
     }),
-    vscode.commands.registerCommand('dbv.openSqliteFile', async () => {
+    registerCommand('dbv.openSqliteFile', async () => {
       const uris = await vscode.window.showOpenDialog({
         canSelectMany: false,
         canSelectFiles: true,
@@ -114,38 +125,38 @@ export function activate(context: vscode.ExtensionContext): void {
       if (!uri) return;
       await openSqlite(uri);
     }),
-    vscode.commands.registerCommand('dbv.newQuery', async (arg?: ConnectionArg | ConnectionItem) => {
+    registerCommand('dbv.newQuery', async (arg?: ConnectionArg | ConnectionItem) => {
       const id = await activeConnectionId(arg);
       if (id) await setActive(id);
       await createScratchQuery(context, '-- Write your SQL query here.\n\nSELECT 1;\n');
     }),
-    vscode.commands.registerCommand('dbv.openSqlFile', async (arg?: unknown) => {
+    registerCommand('dbv.openSqlFile', async (arg?: unknown) => {
       await openSqlFile(context, arg);
     }),
-    vscode.commands.registerCommand('dbv.runQuery', async (arg?: unknown) => {
+    registerCommand('dbv.runQuery', async (arg?: unknown) => {
       await runQueryFromEditor(context, service, typeof arg === 'string' ? arg : undefined);
     }),
-    vscode.commands.registerCommand('dbv.openTable', async (arg?: ConnectionArg) => {
+    registerCommand('dbv.openTable', async (arg?: ConnectionArg) => {
       const selected = await pickTable(service, arg);
       if (!selected) return;
       await setActive(selected.connectionId);
       await tablePanels.open(selected.connectionId, selected.table);
     }),
-    vscode.commands.registerCommand('dbv.exportTable', async (arg?: ConnectionArg) => {
+    registerCommand('dbv.exportTable', async (arg?: ConnectionArg) => {
       const selected = await pickTable(service, arg);
       if (!selected) return;
       await setActive(selected.connectionId);
       await tablePanels.open(selected.connectionId, selected.table);
       void vscode.window.showInformationMessage('Use the Export button in the DBV table toolbar to choose CSV, JSON or SQL.');
     }),
-    vscode.commands.registerCommand('dbv.openAsText', async () => {
+    registerCommand('dbv.openAsText', async () => {
       const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
       const input = tab?.input;
       if (input instanceof vscode.TabInputCustom) {
         await vscode.commands.executeCommand('vscode.openWith', input.uri, 'default');
       }
     }),
-    vscode.commands.registerCommand('dbv.showQueryHistory', async () => {
+    registerCommand('dbv.showQueryHistory', async () => {
       const entries = history.list();
       if (!entries.length) {
         void vscode.window.showInformationMessage('DBV query history is empty.');
@@ -165,11 +176,11 @@ export function activate(context: vscode.ExtensionContext): void {
       await setActive(entry.connectionId);
       await createScratchQuery(context, entry.sql);
     }),
-    vscode.commands.registerCommand('dbv.clearQueryHistory', async () => {
+    registerCommand('dbv.clearQueryHistory', async () => {
       await history.clear();
       void vscode.window.showInformationMessage('DBV query history cleared.');
     }),
-    vscode.commands.registerCommand('dbv.openDocs', async () => {
+    registerCommand('dbv.openDocs', async () => {
       await vscode.env.openExternal(
         vscode.Uri.parse('https://github.com/Nighty3098/DBV_vscode#readme'),
       );
@@ -201,6 +212,7 @@ export function activate(context: vscode.ExtensionContext): void {
             await setActive(config.id);
             treeProvider.refresh();
           } catch (error) {
+            logger.error('Could not save SQLite connection', error);
             void vscode.window.showErrorMessage(`DBV: ${errorMessage(error)}`);
           }
         }
@@ -217,8 +229,8 @@ export function activate(context: vscode.ExtensionContext): void {
       for (const config of store.list()) {
         try {
           await service.getDriver(config.id);
-        } catch {
-          // A connection failure must not prevent the extension from activating.
+        } catch (error) {
+          logger.warn(`Auto-connect failed for "${config.name}"`, error);
         }
       }
       treeProvider.refresh();
@@ -380,7 +392,11 @@ async function selectConnectionId(
   const connections = service.list();
   if (!connections.length) {
     void vscode.window.showInformationMessage('DBV: add a connection first.', 'Add Connection').then((choice) => {
-      if (choice === 'Add Connection') void vscode.commands.executeCommand('dbv.addConnection');
+      if (choice === 'Add Connection') {
+        void vscode.commands.executeCommand('dbv.addConnection').then(undefined, (error: unknown) => {
+          logger.error('Could not open the add connection command', error);
+        });
+      }
     });
     return undefined;
   }
@@ -405,6 +421,7 @@ async function connectAndReport(
     await service.connect(config.id);
     void vscode.window.showInformationMessage(`DBV connected to ${config.name}`);
   } catch (error) {
+    logger.error(`Could not connect to "${config.name}"`, error);
     void vscode.window.showErrorMessage(`DBV: ${errorMessage(error)}`);
   }
 }
@@ -445,6 +462,7 @@ async function pickTable(
     });
     return picked ? { connectionId, table: picked.table } : undefined;
   } catch (error) {
+    logger.error(`Could not load tables for connection "${connectionId}"`, error);
     void vscode.window.showErrorMessage(`DBV: ${errorMessage(error)}`);
     return undefined;
   }
@@ -486,6 +504,7 @@ async function createScratchQuery(
     await vscode.workspace.fs.writeFile(uri, Buffer.from(sql, 'utf8'));
     await vscode.commands.executeCommand('vscode.openWith', uri, SqlEditorProvider.viewType);
   } catch (error) {
+    logger.error('Could not create scratch SQL query', error);
     void vscode.window.showErrorMessage(`DBV could not create a query file: ${errorMessage(error)}`);
   }
 }
@@ -533,3 +552,16 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function registerCommand<T extends (...args: never[]) => unknown>(
+  command: string,
+  handler: T,
+): vscode.Disposable {
+  return vscode.commands.registerCommand(command, async (...args: Parameters<T>) => {
+    try {
+      return await handler(...args);
+    } catch (error) {
+      logger.error(`Command "${command}" failed`, error);
+      void vscode.window.showErrorMessage(`DBV: ${errorMessage(error)}`);
+    }
+  });
+}

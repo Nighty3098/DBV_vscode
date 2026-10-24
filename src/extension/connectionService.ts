@@ -4,6 +4,7 @@ import type { ConnectionStore } from './connectionStore';
 import type { Driver } from './drivers/base';
 import { defaultDriverFactory, type DriverFactory } from './drivers/factory';
 import { connectionEndpoint } from '../core/validation';
+import { logger } from './logger';
 
 interface Entry {
   config: ConnectionConfig;
@@ -52,7 +53,11 @@ export class ConnectionService implements vscode.Disposable {
     if (!config) throw new Error('Connection not found');
     let entry = this.entries.get(id);
     if (!entry || entry.config.updatedAt !== config.updatedAt) {
-      if (entry?.driver) await entry.driver.close().catch(() => undefined);
+      if (entry?.driver) {
+        await entry.driver.close().catch((error: unknown) => {
+          logger.warn(`Could not close stale connection "${config.name}"`, error);
+        });
+      }
       entry = { config };
       this.entries.set(id, entry);
     }
@@ -70,7 +75,9 @@ export class ConnectionService implements vscode.Disposable {
     try {
       return await entry.connecting;
     } catch (error) {
-      await driver.close().catch(() => undefined);
+      await driver.close().catch((closeError: unknown) => {
+        logger.warn(`Could not clean up failed connection "${config.name}"`, closeError);
+      });
       entry.connecting = undefined;
       throw error;
     } finally {
@@ -85,7 +92,9 @@ export class ConnectionService implements vscode.Disposable {
   async disconnect(id: string): Promise<void> {
     const entry = this.entries.get(id);
     if (!entry) return;
-    await entry.driver?.close().catch(() => undefined);
+    await entry.driver?.close().catch((error: unknown) => {
+      logger.warn(`Could not close connection "${entry?.config.name ?? id}"`, error);
+    });
     entry.driver = undefined;
     entry.connecting = undefined;
     this.changeEmitter.fire();
@@ -123,7 +132,9 @@ export class ConnectionService implements vscode.Disposable {
     this.disposeEmitter.dispose();
     await Promise.all(
       [...this.entries.values()].map(async (entry) => {
-        await entry.driver?.close().catch(() => undefined);
+        await entry.driver?.close().catch((error: unknown) => {
+          logger.warn(`Could not close connection "${entry.config.name}" during shutdown`, error);
+        });
       }),
     );
     this.entries.clear();

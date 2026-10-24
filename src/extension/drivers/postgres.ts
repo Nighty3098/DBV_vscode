@@ -17,6 +17,7 @@ import { limitSelect, splitSqlStatements } from '../../core/queryBuilder';
 import type { Mutation } from '../../core/mutations';
 import { serializeResult } from '../../core/serialization';
 import { quoteIdentifier, quoteQualified } from '../../core/identifiers';
+import { logger } from '../logger';
 
 type PgPool = Pool;
 
@@ -46,22 +47,25 @@ export class PostgresDriver extends BaseDriver {
       connectionTimeoutMillis: 15_000,
       idleTimeoutMillis: 30_000,
     });
-    pool.on('error', () => {
-      // Idle connection errors are surfaced by the next query. Swallow here so
-      // Node does not treat the pool error as an unhandled exception.
+    pool.on('error', (error: Error) => {
+      logger.warn(`PostgreSQL idle connection error for "${this.config.name}"`, error);
     });
     try {
       await pool.query('SELECT 1');
       this.pool = pool;
       this.connected = true;
     } catch (error) {
-      await pool.end().catch(() => undefined);
+      await pool.end().catch((closeError: unknown) => {
+        logger.warn(`Could not clean up failed PostgreSQL connection "${this.config.name}"`, closeError);
+      });
       throw new Error(`PostgreSQL connection failed: ${errorMessage(error)}`);
     }
   }
 
   async close(): Promise<void> {
-    await this.pool?.end().catch(() => undefined);
+    await this.pool?.end().catch((error: unknown) => {
+      logger.warn(`Could not close PostgreSQL connection "${this.config.name}"`, error);
+    });
     this.pool = undefined;
     this.connected = false;
   }
@@ -302,4 +306,3 @@ function pgAction(code: string): string {
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
-

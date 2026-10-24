@@ -23,7 +23,7 @@ interface SQLiteColumnRow {
   type: string;
   notnull: number;
   dflt_value: string | null;
-  pk: number;
+  pk: number | bigint;
 }
 
 interface SQLiteIndexRow {
@@ -107,10 +107,13 @@ export class SqliteDriver extends BaseDriver {
     const tableSql = master?.sql ?? '';
     const autoIncrement = /AUTOINCREMENT/i.test(tableSql);
     const pkColumns = info
-      .filter((row) => row.pk > 0)
-      .sort((a, b) => a.pk - b.pk)
+      .filter((row) => Number(row.pk) > 0)
+      .sort((a, b) => Number(a.pk) - Number(b.pk))
       .map((row) => row.name);
     const isView = table.type === 'view';
+    const indexList = !isView
+      ? db.prepare(`PRAGMA index_list(${escaped})`).all() as unknown as SQLiteIndexRow[]
+      : [];
     let rowIdAvailable = false;
     if (!isView) {
       try {
@@ -120,20 +123,23 @@ export class SqliteDriver extends BaseDriver {
         rowIdAvailable = false;
       }
     }
+    const integerPrimaryKeyIsRowId = rowIdAvailable &&
+      pkColumns.length === 1 &&
+      info.some((row) => Number(row.pk) === 1 && row.type.trim().toUpperCase() === 'INTEGER') &&
+      !indexList.some((index) => index.origin === 'pk');
 
     const columns: ColumnInfo[] = info.map((row, index) => ({
       name: row.name,
       dataType: row.type || 'ANY',
-      nullable: row.notnull === 0,
+      nullable: row.notnull === 0 && !(integerPrimaryKeyIsRowId && Number(row.pk) > 0),
       defaultValue: row.dflt_value,
-      primaryKey: row.pk > 0,
-      autoIncrement: autoIncrement && row.pk > 0 && row.type.toUpperCase().includes('INT'),
+      primaryKey: Number(row.pk) > 0,
+      autoIncrement: autoIncrement && Number(row.pk) > 0 && row.type.toUpperCase().includes('INT'),
       ordinal: index + 1,
     }));
 
     const indexes: IndexInfo[] = [];
     if (!isView) {
-      const indexList = db.prepare(`PRAGMA index_list(${escaped})`).all() as unknown as SQLiteIndexRow[];
       for (const index of indexList) {
         const indexInfo = db
           .prepare(`PRAGMA index_info(${quoteIdentifier(index.name, 'sqlite')})`)

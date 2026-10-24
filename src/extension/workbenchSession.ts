@@ -14,6 +14,7 @@ import type { Driver } from './drivers/base';
 import type { ConnectionService } from './connectionService';
 import type { QueryHistoryStore } from './historyStore';
 import { exportResult } from '../core/serialization';
+import { logger } from './logger';
 
 export interface FixedConnection {
   config: ConnectionConfig;
@@ -52,7 +53,10 @@ export class WorkbenchSession implements vscode.Disposable {
       options.webview.onDidReceiveMessage((message: WebviewMessage) => {
         this.messageQueue = this.messageQueue
           .then(() => this.handle(message))
-          .catch((error: unknown) => this.notify('error', errorMessage(error)));
+          .catch((error: unknown) => {
+            logger.error('Could not process a webview message', error);
+            this.notify('error', errorMessage(error));
+          });
       }),
     );
     this.disposables.push(
@@ -80,7 +84,9 @@ export class WorkbenchSession implements vscode.Disposable {
   }
 
   private post(message: HostMessage): void {
-    void this.options.webview.postMessage(message);
+    void this.options.webview.postMessage(message).then(undefined, (error: unknown) => {
+      logger.error(`Could not post "${message.type}" message to webview`, error);
+    });
   }
 
   private fixedSummary(): ConnectionSummary | undefined {
@@ -257,6 +263,7 @@ export class WorkbenchSession implements vscode.Disposable {
           break;
       }
     } catch (error) {
+      logger.error(`Webview action "${message.type}" failed`, error);
       const text = errorMessage(error);
       if (request.requestId) this.post({ type: 'requestError', requestId: request.requestId, message: text });
       else this.notify('error', text);
@@ -307,6 +314,7 @@ export class WorkbenchSession implements vscode.Disposable {
         createdAt: Date.now(),
       });
     } catch (error) {
+      logger.error('SQL query execution failed', error);
       const text = errorMessage(error);
       this.post({ type: 'queryError', requestId: message.requestId, message: text });
       await this.recordHistory({
@@ -345,6 +353,7 @@ export class WorkbenchSession implements vscode.Disposable {
         activeConnectionId: this.activeConnectionId ?? (this.options.fixed ? config.id : undefined),
       });
     } catch (error) {
+      logger.error('Could not load database catalog', error);
       this.notify('error', errorMessage(error));
     }
   }

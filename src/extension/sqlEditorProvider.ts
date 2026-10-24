@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { basename } from 'node:path';
 import { WorkbenchSession } from './workbenchSession';
+import { logger } from './logger';
 import type { ConnectionService } from './connectionService';
 import type { QueryHistoryStore } from './historyStore';
 import { webviewHtml } from './webviewHtml';
@@ -33,30 +34,35 @@ export class SqlEditorProvider implements vscode.CustomTextEditorProvider {
     document: vscode.TextDocument,
     panel: vscode.WebviewPanel,
   ): Promise<void> {
-    const extensionUri = this.context.extensionUri;
-    panel.webview.options = {
-      enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist')],
-    };
-    panel.webview.html = webviewHtml(panel.webview, extensionUri, basename(document.uri.fsPath));
-    panel.title = `${basename(document.uri.fsPath)} — DBV`;
-    panel.iconPath = vscode.Uri.joinPath(extensionUri, 'media', 'database.svg');
+    try {
+      const extensionUri = this.context.extensionUri;
+      panel.webview.options = {
+        enableScripts: true,
+        localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist')],
+      };
+      panel.webview.html = webviewHtml(panel.webview, extensionUri, basename(document.uri.fsPath));
+      panel.title = `${basename(document.uri.fsPath)} — DBV`;
+      panel.iconPath = vscode.Uri.joinPath(extensionUri, 'media', 'database.svg');
 
-    const savedConnection = this.context.workspaceState.get<string>('dbv.activeConnectionId');
-    const activeConnectionId = savedConnection && this.service.getConfig(savedConnection) ? savedConnection : undefined;
-    const session = new WorkbenchSession({
-      context: this.context,
-      service: this.service,
-      history: this.history,
-      webview: panel.webview,
-      mode: 'sql',
-      document,
-      initialConnectionId: activeConnectionId,
-      setActiveConnectionId: async (id) => {
-        await this.context.workspaceState.update('dbv.activeConnectionId', id);
-      },
-    });
+      const savedConnection = this.context.workspaceState.get<string>('dbv.activeConnectionId');
+      const activeConnectionId = savedConnection && this.service.getConfig(savedConnection) ? savedConnection : undefined;
+      const session = new WorkbenchSession({
+        context: this.context,
+        service: this.service,
+        history: this.history,
+        webview: panel.webview,
+        mode: 'sql',
+        document,
+        initialConnectionId: activeConnectionId,
+        setActiveConnectionId: async (id) => {
+          await this.context.workspaceState.update('dbv.activeConnectionId', id);
+        },
+      });
 
-    panel.onDidDispose(() => session.dispose());
+      panel.onDidDispose(() => session.dispose());
+    } catch (error) {
+      logger.error(`Could not initialize SQL editor "${document.uri.fsPath}"`, error);
+      throw error;
+    }
   }
 }

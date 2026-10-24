@@ -35,6 +35,11 @@ beforeAll(async () => {
       avatar BLOB
     );
     CREATE TABLE notes (body TEXT, user_id INTEGER REFERENCES users(id));
+    CREATE TABLE composite_keys (
+      left_key TEXT,
+      right_key TEXT,
+      PRIMARY KEY (left_key, right_key)
+    );
     CREATE INDEX idx_users_name ON users(name);
     CREATE VIEW active_users AS SELECT id, name FROM users WHERE active = 1;
     INSERT INTO users (name, email, score, avatar) VALUES
@@ -89,6 +94,11 @@ describe('SQLite driver integration', () => {
     const view = await driver.getStructure({ name: 'active_users', type: 'view' });
     expect(view.indexes).toEqual([]);
     expect(view.rowIdAvailable).toBe(false);
+    const composite = await driver.getStructure({ name: 'composite_keys', type: 'table' });
+    expect(composite.columns.find((column) => column.name === 'left_key')).toMatchObject({
+      primaryKey: true,
+    });
+    expect(composite.primaryKey).toEqual(['left_key', 'right_key']);
   });
 
   it('loads paginated rows with sorting and filters', async () => {
