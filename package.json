@@ -1,0 +1,350 @@
+{
+  "name": "dbv",
+  "displayName": "DBV — Database Viewer & SQL Workbench",
+  "description": "Open-source database explorer, SQL workbench and data editor for VS Code and VSCodium. SQLite, PostgreSQL, MySQL/MariaDB and SQL Server.",
+  "version": "0.1.0",
+  "publisher": "nighty3098",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nighty3098/DBV_vscode.git"
+  },
+  "homepage": "https://github.com/Nighty3098/DBV_vscode#readme",
+  "bugs": {
+    "url": "https://github.com/Nighty3098/DBV_vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other",
+    "Data Science"
+  ],
+  "keywords": [
+    "database",
+    "sqlite",
+    "postgres",
+    "mysql",
+    "mssql",
+    "sql",
+    "dbeaver",
+    "viewer"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.js",
+  "icon": "media/icon.png",
+  "files": [
+    "dist",
+    "media",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCustomEditor:dbv.databaseEditor",
+    "onCustomEditor:dbv.sqlEditor",
+    "onCommand:dbv.addConnection"
+  ],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "dbv.databaseEditor",
+        "displayName": "DBV Database Viewer",
+        "selector": [
+          { "filenamePattern": "*.sqlite" },
+          { "filenamePattern": "*.sqlite3" },
+          { "filenamePattern": "*.db" },
+          { "filenamePattern": "*.db3" },
+          { "filenamePattern": "*.s3db" },
+          { "filenamePattern": "*.gpkg" }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "dbv.sqlEditor",
+        "displayName": "DBV SQL Workbench",
+        "selector": [
+          { "filenamePattern": "*.sql" }
+        ],
+        "priority": "default"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dbv",
+          "title": "DBV",
+          "icon": "media/database.svg"
+        }
+      ]
+    },
+    "views": {
+      "dbv": [
+        {
+          "id": "dbv.connections",
+          "name": "Connections",
+          "icon": "media/database.svg",
+          "contextualTitle": "DBV Connections"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "dbv.connections",
+        "contents": "No database connections yet.\n[Add Connection](command:dbv.addConnection)\n[Open SQLite File](command:dbv.openSqliteFile)\n\nDBV is free and open source. Your passwords are stored in VS Code Secret Storage."
+      }
+    ],
+    "commands": [
+      {
+        "command": "dbv.addConnection",
+        "title": "Add Database Connection",
+        "category": "DBV",
+        "icon": "$(add)"
+      },
+      {
+        "command": "dbv.editConnection",
+        "title": "Edit Connection",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.removeConnection",
+        "title": "Remove Connection",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.connect",
+        "title": "Connect",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.disconnect",
+        "title": "Disconnect",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.refreshConnections",
+        "title": "Refresh Connections",
+        "category": "DBV",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "dbv.openSqliteFile",
+        "title": "Open SQLite Database File",
+        "category": "DBV",
+        "icon": "$(database)"
+      },
+      {
+        "command": "dbv.newQuery",
+        "title": "New SQL Query",
+        "category": "DBV",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "dbv.openTable",
+        "title": "Open Table",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.runQuery",
+        "title": "Open Query in DBV",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.openSqlFile",
+        "title": "Open File with DBV",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.openAsText",
+        "title": "Reopen DBV Editor as Text",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.exportTable",
+        "title": "Export Table",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.showQueryHistory",
+        "title": "Show Query History",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.clearQueryHistory",
+        "title": "Clear Query History",
+        "category": "DBV"
+      },
+      {
+        "command": "dbv.openDocs",
+        "title": "Open Documentation",
+        "category": "DBV"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "dbv.addConnection",
+          "when": "view == dbv.connections",
+          "group": "navigation@1"
+        },
+        {
+          "command": "dbv.refreshConnections",
+          "when": "view == dbv.connections",
+          "group": "navigation@2"
+        },
+        {
+          "command": "dbv.newQuery",
+          "when": "view == dbv.connections",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "dbv.newQuery",
+          "when": "view == dbv.connections && viewItem == connection",
+          "group": "inline@1"
+        },
+        {
+          "command": "dbv.editConnection",
+          "when": "view == dbv.connections && viewItem == connection",
+          "group": "1_edit@1"
+        },
+        {
+          "command": "dbv.removeConnection",
+          "when": "view == dbv.connections && viewItem == connection",
+          "group": "2_remove@1"
+        },
+        {
+          "command": "dbv.disconnect",
+          "when": "view == dbv.connections && viewItem == connection",
+          "group": "3_connection@1"
+        },
+        {
+          "command": "dbv.exportTable",
+          "when": "view == dbv.connections && viewItem == table",
+          "group": "inline@1"
+        },
+        {
+          "command": "dbv.openTable",
+          "when": "view == dbv.connections && viewItem == table",
+          "group": "1_open@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dbv.openAsText",
+          "when": "activeCustomEditorId == dbv.sqlEditor || activeCustomEditorId == dbv.databaseEditor"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "dbv.openAsText",
+          "when": "activeCustomEditorId == dbv.sqlEditor || activeCustomEditorId == dbv.databaseEditor",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DBV",
+      "properties": {
+        "dbv.pageSize": {
+          "type": "number",
+          "default": 200,
+          "minimum": 25,
+          "maximum": 2000,
+          "description": "Rows fetched per page in the table browser."
+        },
+        "dbv.maxResultRows": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 50,
+          "maximum": 50000,
+          "description": "Maximum number of rows kept from an ad-hoc SQL query."
+        },
+        "dbv.queryTimeout": {
+          "type": "number",
+          "default": 60,
+          "minimum": 1,
+          "maximum": 3600,
+          "description": "Query timeout in seconds."
+        },
+        "dbv.confirmDestructiveActions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for confirmation before deleting rows, dropping objects and other destructive actions."
+        },
+        "dbv.showNullAs": {
+          "type": "string",
+          "default": "NULL",
+          "description": "Text used to render SQL NULL values in the data grid."
+        },
+        "dbv.defaultRows": {
+          "type": "number",
+          "default": 200,
+          "minimum": 25,
+          "maximum": 5000,
+          "description": "Default number of rows to fetch for a new query."
+        },
+        "dbv.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect saved connections when DBV starts."
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "dbv.runQuery",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == sql"
+      }
+    ]
+  },
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "compile": "tsc --noEmit",
+    "package": "npm run build && npx --yes @vscode/vsce package --no-dependencies",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "check": "npm run compile && npm run lint && npm test"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-sql": "^6.8.0",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.5",
+    "mssql": "^11.0.1",
+    "mysql2": "^3.14.0",
+    "pg": "^8.15.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/mssql": "^9.1.8",
+    "@types/node": "^22.14.0",
+    "@types/pg": "^8.11.11",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/vscode": "^1.100.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^3.1.1",
+    "esbuild": "^0.25.2",
+    "eslint": "^9.24.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.0",
+    "vitest": "^3.1.1"
+  }
+}
