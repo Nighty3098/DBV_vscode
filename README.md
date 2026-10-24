@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="media/icon.png" width="150px" />
+
 # DBV — Database Viewer & SQL Workbench
 
 [![CI](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml)
@@ -5,7 +9,7 @@
 
 DBV is a free, open-source database explorer for **VS Code** and **VSCodium**. It opens SQLite files as rich visual editors, keeps saved server connections, runs SQL, browses huge tables with server-side pagination, and edits records safely. No paid tiers, telemetry, accounts, or proprietary services.
 
-![DBV icon](media/icon.png)
+</div>
 
 ## Highlights
 
