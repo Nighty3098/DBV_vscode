@@ -2,6 +2,10 @@
 
 <img src="media/icon.png" width="150px" />
 
+<br /><br />
+
+<img src="./screen.png" />
+
 # DBV — Database Viewer & SQL Workbench
 
 [![CI](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml)
