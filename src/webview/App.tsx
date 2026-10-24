@@ -21,8 +21,16 @@ import { FILTER_OPERATORS } from '../core/queryBuilder';
 import { primaryKeyOf, parseInputValue } from '../core/mutations';
 import { cellToDisplay, formatValueForExport } from '../core/serialization';
 import { SqlCodeEditor, type SqlEditorHandle } from './SqlCodeEditor';
+import { Icon, type IconName } from './Icon';
 
 const vscode = acquireVsCodeApi<{ mode?: string }>();
+
+const TOAST_ICONS: Record<string, IconName> = {
+  success: 'check',
+  warning: 'alert-triangle',
+  error: 'alert-circle',
+  info: 'info',
+};
 
 function post(message: WebviewMessage): void {
   vscode.postMessage(message);
@@ -428,7 +436,7 @@ export function App(): React.ReactElement {
     return (
       <div className="fatal-screen">
         <div className="empty-state">
-          <div className="empty-icon">⚠</div>
+          <div className="empty-icon"><Icon name="alert-triangle" size={30} /></div>
           <h2>Could not open database</h2>
           <p className="error-text">{init.fatalError}</p>
           <p className="muted">
@@ -456,7 +464,7 @@ export function App(): React.ReactElement {
         <div className="modal wide">
           <div className="modal-header">
             <h2>Insert row</h2>
-            <button className="icon-button" onClick={() => setInsertOpen(false)} aria-label="Close">×</button>
+            <button className="icon-button" onClick={() => setInsertOpen(false)} aria-label="Close"><Icon name="x" /></button>
           </div>
           <p className="muted">Tick a field to include it. Unticked fields use their database default. Type NULL or tick “Set NULL”.</p>
           <div className="insert-grid">
@@ -528,7 +536,7 @@ export function App(): React.ReactElement {
         <div className="modal">
           <div className="modal-header">
             <h2>Edit {cellEdit.column.name}</h2>
-            <button className="icon-button" onClick={() => setCellEdit(undefined)} aria-label="Close">×</button>
+            <button className="icon-button" onClick={() => setCellEdit(undefined)} aria-label="Close"><Icon name="x" /></button>
           </div>
           <p className="muted">{cellEdit.column.dataType}{cellEdit.column.nullable ? ' · nullable' : ' · not null'}</p>
           <textarea
@@ -596,7 +604,7 @@ export function App(): React.ReactElement {
             className="link-button"
             onClick={() => setFilterDrafts([...filterDrafts, { key: Math.random(), column: selectedColumnNames[0] ?? '', operator: '=', value: '' }])}
           >
-            + Add condition
+            <Icon name="plus" size={13} /> Add condition
           </button>
         </div>
         {!filterDrafts.length && <div className="muted compact">No conditions. Add one to narrow this table.</div>}
@@ -627,7 +635,7 @@ export function App(): React.ReactElement {
                 className="icon-button danger-hover"
                 aria-label="Remove filter"
                 onClick={() => setFilterDrafts(filterDrafts.filter((item) => item.key !== filter.key))}
-              >×</button>
+              ><Icon name="x" /></button>
             </div>
           );
         })}
@@ -645,7 +653,7 @@ export function App(): React.ReactElement {
     if (!selectedTable) {
       return (
         <div className="empty-state">
-          <div className="empty-icon">▦</div>
+          <div className="empty-icon"><Icon name="table" size={30} /></div>
           <h2>Pick a table</h2>
           <p>Select a table or view in the sidebar to browse and edit its rows.</p>
           {!isSqlMode && <button className="primary" onClick={() => setTab('query')}>Write a query</button>}
@@ -656,15 +664,15 @@ export function App(): React.ReactElement {
       <div className="data-view">
         <div className="view-toolbar">
           <div className="table-heading">
-            <span className="table-icon">{selectedTable.type === 'view' ? '◉' : '▦'}</span>
+            <span className="table-icon"><Icon name={selectedTable.type === 'view' ? 'eye' : 'table'} /></span>
             <strong>{tableLabel}</strong>
             {selectedTable.type === 'view' && <span className="pill">VIEW</span>}
             {!canEdit && page && <span className="pill warn" title={page.editReason}>{page.editReason ?? 'Read only'}</span>}
           </div>
           <div className="toolbar-actions">
-            <button onClick={openFilters} className={filters.length ? 'active' : ''}>Filters{filters.length ? ` (${filters.length})` : ''}</button>
-            <button onClick={refresh} title="Refresh">↻</button>
-            <button onClick={openInsert} disabled={!canEdit} title={canEdit ? 'Insert row' : 'This table is read-only'}>+ Row</button>
+            <button onClick={openFilters} className={filters.length ? 'active' : ''}><Icon name="filter" /> Filters{filters.length ? ` (${filters.length})` : ''}</button>
+            <button className="icon-button" onClick={refresh} title="Refresh" aria-label="Refresh"><Icon name="refresh" /></button>
+            <button onClick={openInsert} disabled={!canEdit} title={canEdit ? 'Insert row' : 'This table is read-only'}><Icon name="plus" /> Row</button>
             <button
               onClick={() => {
                 if (!page || !selectedRows.size) return;
@@ -674,34 +682,37 @@ export function App(): React.ReactElement {
               disabled={!canEdit || !selectedRows.size}
               className="danger"
             >
-              Delete{selectedRows.size ? ` (${selectedRows.size})` : ''}
+              <Icon name="trash" /> Delete{selectedRows.size ? ` (${selectedRows.size})` : ''}
             </button>
-            <select
-              className="export-select"
-              value=""
-              onChange={(event) => {
-                if (!page) return;
-                post({ type: 'exportTable', table: { schema: page.schema, name: page.table, type: selectedTable.type }, format: event.target.value as ExportFormat });
-                event.target.value = '';
-              }}
-              aria-label="Export table"
-            >
-              <option value="">Export…</option>
-              <option value="csv">CSV</option>
-              <option value="json">JSON</option>
-              <option value="jsonl">JSON Lines</option>
-              <option value="sql">SQL inserts</option>
-            </select>
+            <label className="toolbar-select" title="Export table">
+              <Icon name="download" size={12} />
+              <select
+                className="export-select"
+                value=""
+                onChange={(event) => {
+                  if (!page) return;
+                  post({ type: 'exportTable', table: { schema: page.schema, name: page.table, type: selectedTable.type }, format: event.target.value as ExportFormat });
+                  event.target.value = '';
+                }}
+                aria-label="Export table"
+              >
+                <option value="">Export…</option>
+                <option value="csv">CSV</option>
+                <option value="json">JSON</option>
+                <option value="jsonl">JSON Lines</option>
+                <option value="sql">SQL inserts</option>
+              </select>
+            </label>
             {selectedTable.type === 'table' && (
               <details className="more-menu">
-                <summary aria-label="More actions">⋯</summary>
+                <summary aria-label="More actions"><Icon name="more" /></summary>
                 <div className="menu">
                   <button onClick={() => post({ type: 'truncateTable', table: { schema: page?.schema, name: selectedTable.name, type: 'table' } })} disabled={!canEdit}>Empty table</button>
                   <button className="danger" onClick={() => post({ type: 'dropTable', table: { schema: page?.schema, name: selectedTable.name, type: 'table' } })} disabled={!canEdit}>Drop table</button>
                 </div>
               </details>
             )}
-            <button onClick={() => loadTableInQuery(selectedTable)} title="Open table in query editor">SQL</button>
+            <button onClick={() => loadTableInQuery(selectedTable)} title="Open table in query editor"><Icon name="code" /> SQL</button>
           </div>
         </div>
         {renderFilterPanel()}
@@ -719,7 +730,7 @@ export function App(): React.ReactElement {
                         <span className="col-name">{column.name}</span>
                         {column.primaryKey && <span className="key-mark" title="Primary key">PK</span>}
                         <span className="col-type">{column.dataType}</span>
-                        {sort?.column === column.name && <span className="sort-mark">{sort.direction === 'asc' ? '↑' : '↓'}</span>}
+                        {sort?.column === column.name && <span className="sort-mark"><Icon name={sort.direction === 'asc' ? 'arrow-up' : 'arrow-down'} size={12} /></span>}
                       </button>
                     </th>
                   ))}
@@ -775,11 +786,11 @@ export function App(): React.ReactElement {
             <select value={pageLimit} onChange={(event) => changePageLimit(Number(event.target.value))} aria-label="Rows per page">
               {[100, 200, 500, 1000, 2000].map((size) => <option key={size} value={size}>{size} rows</option>)}
             </select>
-            <button onClick={() => goToPage(0)} disabled={!page || page.offset === 0}>« First</button>
-            <button onClick={() => goToPage(Math.max(0, pageOffset - pageLimit))} disabled={!page || pageOffset === 0}>‹ Prev</button>
+            <button className="icon-button" onClick={() => goToPage(0)} disabled={!page || page.offset === 0} title="First page" aria-label="First page"><Icon name="chevrons-left" /></button>
+            <button className="icon-button" onClick={() => goToPage(Math.max(0, pageOffset - pageLimit))} disabled={!page || pageOffset === 0} title="Previous page" aria-label="Previous page"><Icon name="chevron-left" /></button>
             {totalPages && <span className="page-number">Page {Math.floor(pageOffset / pageLimit) + 1} / {totalPages}</span>}
-            <button onClick={() => goToPage(pageOffset + pageLimit)} disabled={!page || (knownTotal !== null ? pageOffset + page.rows.length >= knownTotal : page.rows.length < pageLimit)}>Next ›</button>
-            <button onClick={() => knownTotal !== null && goToPage(Math.max(0, (totalPages! - 1) * pageLimit))} disabled={!page || knownTotal === null || totalPages === 1}>Last »</button>
+            <button className="icon-button" onClick={() => goToPage(pageOffset + pageLimit)} disabled={!page || (knownTotal !== null ? pageOffset + page.rows.length >= knownTotal : page.rows.length < pageLimit)} title="Next page" aria-label="Next page"><Icon name="chevron-right" /></button>
+            <button className="icon-button" onClick={() => knownTotal !== null && goToPage(Math.max(0, (totalPages! - 1) * pageLimit))} disabled={!page || knownTotal === null || totalPages === 1} title="Last page" aria-label="Last page"><Icon name="chevrons-right" /></button>
           </div>
         </div>
         {renderInsertDialog()}
@@ -799,8 +810,8 @@ export function App(): React.ReactElement {
         <div className="view-toolbar">
           <div className="table-heading"><strong>Structure</strong><span className="muted">{structure.columns.length} columns · {structure.indexes.length} indexes</span></div>
           <div className="toolbar-actions">
-            <button onClick={() => loadStructure(selectedTable, false)}>↻ Refresh</button>
-            {structure.ddl && <button onClick={() => post({ type: 'copyText', text: structure.ddl! })}>Copy DDL</button>}
+            <button onClick={() => loadStructure(selectedTable, false)}><Icon name="refresh" /> Refresh</button>
+            {structure.ddl && <button onClick={() => post({ type: 'copyText', text: structure.ddl! })}><Icon name="copy" /> Copy DDL</button>}
           </div>
         </div>
         {structureLoading && <div className="thin-progress" />}
@@ -865,16 +876,19 @@ export function App(): React.ReactElement {
           <span>{queryResult.rowCount.toLocaleString()} row{queryResult.rowCount === 1 ? '' : 's'}{queryResult.truncated ? ' (truncated)' : ''} · {queryResult.durationMs} ms</span>
           <div className="toolbar-actions">
             {lastQuery && (
-              <select className="export-select" value="" aria-label="Export query result" onChange={(event) => {
-                post({ type: 'exportQuery', sql: lastQuery.sql, format: event.target.value as ExportFormat });
-                event.target.value = '';
-              }}>
-                <option value="">Export…</option>
-                <option value="csv">CSV</option>
-                <option value="json">JSON</option>
-                <option value="jsonl">JSON Lines</option>
-                <option value="sql">SQL inserts</option>
-              </select>
+              <label className="toolbar-select" title="Export query result">
+                <Icon name="download" size={12} />
+                <select className="export-select" value="" aria-label="Export query result" onChange={(event) => {
+                  post({ type: 'exportQuery', sql: lastQuery.sql, format: event.target.value as ExportFormat });
+                  event.target.value = '';
+                }}>
+                  <option value="">Export…</option>
+                  <option value="csv">CSV</option>
+                  <option value="json">JSON</option>
+                  <option value="jsonl">JSON Lines</option>
+                  <option value="sql">SQL inserts</option>
+                </select>
+              </label>
             )}
           </div>
         </div>
@@ -904,16 +918,18 @@ export function App(): React.ReactElement {
         {isSqlMode ? (
           <>
             <span className="file-label" title={displayUrl}>{init.fileName}{dirty ? ' ●' : ''}</span>
-            <button className="primary" onClick={saveSql} disabled={!dirty}>Save</button>
+            <button onClick={saveSql} disabled={!dirty}><Icon name="save" /> Save</button>
             {activeSummary ? <span className="connection-chip" title={`${activeSummary.type} · ${activeSummary.host ?? ''}`}>{activeSummary.name}</span> : <span className="pill warn">No connection</span>}
           </>
         ) : (
-          <span className="muted">{activeSummary?.name ?? 'Connected database'}</span>
+          activeSummary
+            ? <span className="connection-chip" title={`${activeSummary.type} · ${activeSummary.host ?? ''}`}>{activeSummary.name}</span>
+            : <span className="pill warn">No connection</span>
         )}
         <div className="spacer" />
-        <button onClick={() => { const sql = sqlEditorRef.current?.getSelectionOrCurrent(); if (sql) executeQuery(sql); }} disabled={queryBusy || !activeSummary}>▶ Run</button>
-        <button onClick={() => { const sql = sqlEditorRef.current?.getAll(); if (sql) executeQuery(sql); }} disabled={queryBusy || !activeSummary} title="Run the entire editor">Run all</button>
-        <button onClick={() => post({ type: 'openQueryFile', sql: sqlEditorRef.current?.getAll() })} title="Save the query as a .sql file">Save as…</button>
+        <button className="primary" onClick={() => { const sql = sqlEditorRef.current?.getSelectionOrCurrent(); if (sql) executeQuery(sql); }} disabled={queryBusy || !activeSummary}><Icon name="play" /> Run</button>
+        <button onClick={() => { const sql = sqlEditorRef.current?.getAll(); if (sql) executeQuery(sql); }} disabled={queryBusy || !activeSummary} title="Run the entire editor"><Icon name="play" /> Run all</button>
+        <button onClick={() => post({ type: 'openQueryFile', sql: sqlEditorRef.current?.getAll() })} title="Save the query as a .sql file"><Icon name="file-plus" /> Save as…</button>
       </div>
       <div className="editor-pane">
         <SqlCodeEditor
@@ -937,22 +953,22 @@ export function App(): React.ReactElement {
       <div className="view-toolbar">
         <strong>Query history</strong>
         <div className="toolbar-actions">
-          <button onClick={() => post({ type: 'clearHistory' })} disabled={!history.length}>Clear history</button>
+          <button onClick={() => post({ type: 'clearHistory' })} disabled={!history.length}><Icon name="trash" /> Clear history</button>
         </div>
       </div>
-      {!history.length && <div className="empty-state"><p>Queries you run will appear here.</p></div>}
+      {!history.length && <div className="empty-state"><div className="empty-icon"><Icon name="history" size={26} /></div><p>Queries you run will appear here.</p></div>}
       <div className="history-list">
         {history.map((entry) => (
           <div className="history-entry" key={entry.id}>
-            <div className="history-status">{entry.success ? '✓' : '✕'}</div>
+            <div className={`history-status ${entry.success ? 'ok' : 'fail'}`}><Icon name={entry.success ? 'check' : 'alert-circle'} /></div>
             <div className="history-body">
               <pre>{entry.sql}</pre>
               <div className="muted compact">{entry.connectionName} · {entry.rowCount} rows · {entry.durationMs} ms · {new Date(entry.createdAt).toLocaleString()}</div>
               {entry.error && <div className="error-text">{entry.error}</div>}
             </div>
             <div className="history-actions">
-              <button onClick={() => { setQuerySql(entry.sql); setTab('query'); }}>Load</button>
-              <button className="primary" onClick={() => { setQuerySql(entry.sql); setTab('query'); window.setTimeout(() => executeQuery(entry.sql), 50); }}>Run</button>
+              <button onClick={() => { setQuerySql(entry.sql); setTab('query'); }}><Icon name="code" /> Load</button>
+              <button className="primary" onClick={() => { setQuerySql(entry.sql); setTab('query'); window.setTimeout(() => executeQuery(entry.sql), 50); }}><Icon name="play" /> Run</button>
             </div>
           </div>
         ))}
@@ -966,17 +982,21 @@ export function App(): React.ReactElement {
       ...schema,
       tables: schema.tables.filter((table) => !normalized || table.name.toLowerCase().includes(normalized) || schema.name.toLowerCase().includes(normalized)),
     })).filter((schema) => !normalized || schema.tables.length || schema.name.toLowerCase().includes(normalized));
+    const explorerName = activeSummary?.name ?? init.fileName ?? 'Database';
 
     return (
-      <aside className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
-        <div className="sidebar-heading">
-          <span>Explorer</span>
+      <aside className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`} aria-label="Database explorer">
+        <div className="sidebar-heading" title={explorerName}>
+          <span className="sidebar-heading-title">{explorerName}</span>
           <div className="sidebar-actions">
-            <button onClick={refreshCatalog} title="Refresh schema" disabled={catalogLoading}>↻</button>
-            <button onClick={() => setSidebarOpen(false)} title="Hide sidebar">‹</button>
+            <button className="icon-button" onClick={refreshCatalog} title="Refresh schema" aria-label="Refresh schema" disabled={catalogLoading}><Icon name="refresh" /></button>
+            <button className="icon-button" onClick={() => setSidebarOpen(false)} title="Hide sidebar" aria-label="Hide sidebar"><Icon name="panel-left" /></button>
           </div>
         </div>
-        <input className="sidebar-search" value={catalogFilter} onChange={(event) => setCatalogFilter(event.target.value)} placeholder="Filter tables…" aria-label="Filter tables" />
+        <label className="sidebar-search-box">
+          <Icon name="search" size={13} className="sidebar-search-icon" />
+          <input className="sidebar-search" value={catalogFilter} onChange={(event) => setCatalogFilter(event.target.value)} placeholder="Filter tables…" aria-label="Filter tables" />
+        </label>
         {isSqlMode && (
           <div className="connection-select-block">
             <label htmlFor="connection-select">Connection</label>
@@ -1000,18 +1020,17 @@ export function App(): React.ReactElement {
               ))}
             </select>
             <div className="connection-buttons">
-              <button onClick={() => post({ type: 'addConnection' })}>+ Add</button>
-              <button onClick={() => post({ type: 'openSqliteFile' })}>Open SQLite</button>
+              <button onClick={() => post({ type: 'addConnection' })}><Icon name="plus" /> Add</button>
+              <button onClick={() => post({ type: 'openSqliteFile' })}><Icon name="file-plus" /> Open SQLite</button>
             </div>
           </div>
         )}
         {isSqlMode && !connections.length && (
           <div className="sidebar-empty">
             <p>No saved connections yet.</p>
-            <button className="primary" onClick={() => post({ type: 'addConnection' })}>Add connection</button>
+            <button className="primary" onClick={() => post({ type: 'addConnection' })}><Icon name="plus" /> Add connection</button>
           </div>
         )}
-        {!isSqlMode && <div className="sidebar-file" title={displayUrl}>{init.fileName ?? 'SQLite database'}</div>}
         <div className="catalog">
           {catalogLoading && <div className="catalog-loading"><div className="spinner small" />Loading schema…</div>}
           {!catalog.length && !catalogLoading && activeSummary && <div className="catalog-empty">No tables or views.</div>}
@@ -1023,21 +1042,21 @@ export function App(): React.ReactElement {
                   const next = new Set(expandedSchemas);
                   if (next.has(schema.name)) next.delete(schema.name); else next.add(schema.name);
                   setExpandedSchemas(next);
-                }}>
-                  <span className="chevron">{expanded ? '▾' : '▸'}</span>
-                  <span>{schema.name}</span>
+                }} aria-expanded={expanded}>
+                  <span className="chevron"><Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={12} /></span>
+                  <span className="schema-name">{schema.name}</span>
                   <span className="count">{schema.tables.length}</span>
                 </button>
                 {expanded && schema.tables.map((table) => (
                   <button
                     key={`${table.schema ?? ''}:${table.name}`}
                     className={`table-item ${selectedTable?.name === table.name && selectedTable?.schema === table.schema ? 'active' : ''}`}
+                    aria-current={selectedTable?.name === table.name && selectedTable?.schema === table.schema ? 'page' : undefined}
                     onClick={() => chooseTable({ ...table, schema: table.schema ?? schema.name })}
                     title={`${schema.name}.${table.name}`}
                   >
-                    <span className="object-icon">{table.type === 'view' ? '◉' : '▦'}</span>
+                    <span className="object-icon"><Icon name={table.type === 'view' ? 'eye' : 'table'} size={13} /></span>
                     <span className="table-name">{table.name}</span>
-                    {table.type === 'view' && <span className="view-mark">V</span>}
                   </button>
                 ))}
               </div>
@@ -1046,45 +1065,33 @@ export function App(): React.ReactElement {
           {isSqlMode && activeSummary && !catalog.length && !catalogLoading && <div className="catalog-empty">Schema is empty.</div>}
         </div>
         <div className="sidebar-footer">
-          <button onClick={() => post({ type: 'openDocs' })}>Docs</button>
-          <button onClick={() => post({ type: 'openQueryFile' })}>New SQL file</button>
+          <button onClick={() => post({ type: 'openDocs' })}><Icon name="book" /> Docs</button>
+          <button onClick={() => post({ type: 'openQueryFile' })}><Icon name="file-plus" /> New SQL file</button>
         </div>
       </aside>
     );
   };
 
-  const tabButton = (id: Tab, label: string, disabled = false) => (
+  const tabButton = (id: Tab, label: string, icon: IconName, disabled = false) => (
     <button className={`tab ${tab === id ? 'active' : ''}`} onClick={() => {
       if (id === 'structure' && selectedTable && !structure) loadStructure(selectedTable);
       setTab(id);
-    }} disabled={disabled}>{label}</button>
+    }} disabled={disabled} aria-current={tab === id ? 'page' : undefined}><Icon name={icon} size={13} /><span>{label}</span></button>
   );
 
   return (
     <div className="app">
-      <header className="titlebar">
-        <button className={`icon-button sidebar-toggle ${sidebarOpen ? 'active' : ''}`} onClick={() => setSidebarOpen(!sidebarOpen)} title="Toggle explorer">☰</button>
-        <div className="brand"><span className="brand-mark">DBV</span><span className="brand-sub">{isSqlMode ? 'SQL Workbench' : 'Database Explorer'}</span></div>
-        <div className="titlebar-connection">
-          {activeSummary ? <><span className={`status-dot ${activeSummary.connected ? 'online' : ''}`} /><span>{activeSummary.name}</span><span className="muted">{activeSummary.type}{activeSummary.host ? ` · ${activeSummary.host}${activeSummary.port ? `:${activeSummary.port}` : ''}` : ''}</span></> : <span className="muted">No active connection</span>}
-        </div>
-        <div className="spacer" />
-        {!isSqlMode && <button onClick={() => setTab('query')}>New query</button>}
-        <button onClick={() => post({ type: 'addConnection' })}>+ Connection</button>
-        <button onClick={() => post({ type: 'openSqliteFile' })}>Open file</button>
-        <button onClick={() => post({ type: 'openDocs' })} title="Documentation">?</button>
-      </header>
       <div className="main">
         {renderSidebar()}
-        {!sidebarOpen && <button className="sidebar-reopen" onClick={() => setSidebarOpen(true)} title="Show explorer">›</button>}
+        {!sidebarOpen && <button className="sidebar-reopen" onClick={() => setSidebarOpen(true)} title="Show explorer" aria-label="Show explorer"><Icon name="chevron-right" /></button>}
         <main className="workspace">
           <div className="tabs">
-            {tabButton('data', 'Data', isSqlMode || !selectedTable)}
-            {tabButton('structure', 'Structure', isSqlMode || !selectedTable)}
-            {tabButton('query', 'Query')}
-            {tabButton('history', 'History')}
+            {tabButton('data', 'Data', 'table', isSqlMode || !selectedTable)}
+            {tabButton('structure', 'Structure', 'columns', isSqlMode || !selectedTable)}
+            {tabButton('query', 'Query', 'code')}
+            {tabButton('history', 'History', 'history')}
             <div className="spacer" />
-            {!isSqlMode && selectedTable && <span className="table-context">{tableLabel}</span>}
+            {!isSqlMode && selectedTable && <span className="table-context"><Icon name="database" size={12} />{tableLabel}</span>}
           </div>
           <div className="workspace-content">
             {tab === 'data' && !isSqlMode && renderData()}
@@ -1096,15 +1103,13 @@ export function App(): React.ReactElement {
           </div>
         </main>
       </div>
-      <div className="statusbar">
-        <span>{activeSummary ? `${activeSummary.type}` : 'DBV'}</span>
-        {selectedTable && <span>{tableLabel}</span>}
-        {isSqlMode && <span>{dirty ? 'Unsaved changes' : 'Saved'}</span>}
-        <div className="spacer" />
-        <span>DBV · open source</span>
-      </div>
       <div className="toasts" aria-live="polite">
-        {toasts.map((toast) => <div key={toast.id} className={`toast ${toast.kind}`}>{toast.message}</div>)}
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast ${toast.kind}`}>
+            <Icon name={TOAST_ICONS[toast.kind] ?? 'info'} size={15} />
+            <span>{toast.message}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

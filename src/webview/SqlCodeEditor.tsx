@@ -10,8 +10,9 @@ import {
   lineNumbers,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
-import { bracketMatching, defaultHighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language';
+import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { sql } from '@codemirror/lang-sql';
+import { tags } from '@lezer/highlight';
 import { statementAtCursor } from '../core/queryBuilder';
 
 export interface SqlEditorHandle {
@@ -51,11 +52,28 @@ const editorTheme = EditorView.theme({
     color: 'var(--vscode-editorLineNumber-foreground)',
     border: 'none',
     borderRight: '1px solid var(--vscode-panel-border)',
+    paddingLeft: '0',
   },
   '.cm-activeLineGutter': { backgroundColor: 'var(--vscode-editor-lineHighlightBackground)' },
   '.cm-activeLine': { backgroundColor: 'var(--vscode-editor-lineHighlightBackground)' },
   '.cm-matchingBracket': { backgroundColor: 'var(--vscode-editorBracketMatch-background)' },
+  '.cm-line': { paddingLeft: '0', paddingRight: '0' },
 });
+
+const vscodeHighlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: 'var(--vscode-symbolIcon-keywordForeground, var(--vscode-textLink-foreground, var(--vscode-editor-foreground)))' },
+  { tag: tags.operator, color: 'var(--vscode-editor-foreground)' },
+  { tag: tags.string, color: 'var(--vscode-debugTokenExpression-string, var(--vscode-editor-foreground))' },
+  { tag: tags.number, color: 'var(--vscode-debugTokenExpression-number, var(--vscode-editor-foreground))' },
+  { tag: tags.bool, color: 'var(--vscode-editorWarning-foreground, var(--vscode-editor-foreground))' },
+  { tag: tags.null, color: 'var(--vscode-editorWarning-foreground, var(--vscode-editor-foreground))' },
+  { tag: tags.comment, color: 'var(--vscode-editorWarning-foreground, var(--vscode-descriptionForeground))', fontStyle: 'italic' },
+  { tag: tags.function(tags.variableName), color: 'var(--vscode-symbolIcon-functionForeground, var(--vscode-textLink-foreground, var(--vscode-editor-foreground)))' },
+  { tag: tags.typeName, color: 'var(--vscode-symbolIcon-classForeground, var(--vscode-textLink-foreground, var(--vscode-editor-foreground)))' },
+  { tag: tags.variableName, color: 'var(--vscode-editor-foreground)' },
+  { tag: tags.propertyName, color: 'var(--vscode-editor-foreground)' },
+  { tag: tags.punctuation, color: 'var(--vscode-editor-foreground)' },
+]);
 
 export const SqlCodeEditor = forwardRef<SqlEditorHandle, Props>(function SqlCodeEditor(
   { value, onChange, onRun, onSave, readOnly, placeholder },
@@ -80,7 +98,7 @@ export const SqlCodeEditor = forwardRef<SqlEditorHandle, Props>(function SqlCode
         drawSelection(),
         EditorState.allowMultipleSelections.of(true),
         indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        syntaxHighlighting(vscodeHighlightStyle),
         bracketMatching(),
         highlightActiveLine(),
         sql(),
