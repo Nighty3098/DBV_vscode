@@ -2,7 +2,7 @@
   "name": "dbv",
   "displayName": "DBV — Database Viewer & SQL Workbench",
   "description": "Open-source database explorer, SQL workbench and data editor for VS Code and VSCodium. SQLite, PostgreSQL, MySQL/MariaDB and SQL Server.",
-  "version": "0.1.0",
+  "version": "0.2.8",
   "publisher": "nighty3098",
   "license": "MIT",
   "repository": {
@@ -54,12 +54,24 @@
         "viewType": "dbv.databaseEditor",
         "displayName": "DBV Database Viewer",
         "selector": [
-          { "filenamePattern": "*.sqlite" },
-          { "filenamePattern": "*.sqlite3" },
-          { "filenamePattern": "*.db" },
-          { "filenamePattern": "*.db3" },
-          { "filenamePattern": "*.s3db" },
-          { "filenamePattern": "*.gpkg" }
+          {
+            "filenamePattern": "*.sqlite"
+          },
+          {
+            "filenamePattern": "*.sqlite3"
+          },
+          {
+            "filenamePattern": "*.db"
+          },
+          {
+            "filenamePattern": "*.db3"
+          },
+          {
+            "filenamePattern": "*.s3db"
+          },
+          {
+            "filenamePattern": "*.gpkg"
+          }
         ],
         "priority": "default"
       },
@@ -67,7 +79,9 @@
         "viewType": "dbv.sqlEditor",
         "displayName": "DBV SQL Workbench",
         "selector": [
-          { "filenamePattern": "*.sql" }
+          {
+            "filenamePattern": "*.sql"
+          }
         ],
         "priority": "default"
       }
