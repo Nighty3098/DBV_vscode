@@ -255,4 +255,11 @@ export type WebviewMessage =
   | { type: 'dropTable'; table: TableRef }
   | { type: 'truncateTable'; table: TableRef }
   | { type: 'openTableInEditor'; table: TableRef }
+  | {
+      type: 'webviewError';
+      source: 'render' | 'runtime' | 'unhandledRejection';
+      message: string;
+      stack?: string;
+      componentStack?: string;
+    }
   | { type: 'copyText'; text: string };

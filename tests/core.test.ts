@@ -36,6 +36,7 @@ import {
   truncateCellText,
 } from '../src/core/serialization';
 import { convertPlaceholders } from '../src/core/placeholders';
+import { normalizeStructureLists } from '../src/core/structure';
 import {
   connectionEndpoint,
   createConnectionId,
@@ -48,6 +49,62 @@ import { filterHistory, formatHistoryTitle, MAX_HISTORY, pushHistory } from '../
 import type { QueryHistoryEntry, QueryResult } from '../src/shared/types';
 
 const table = { name: 'users', type: 'table' as const, schema: 'public' };
+
+describe('table structure metadata', () => {
+  it('normalizes malformed column lists and reports the affected fields', () => {
+    const result = normalizeStructureLists({
+      table,
+      columns: [],
+      indexes: [
+        { name: 'idx_users_name', columns: { 0: 'name' }, unique: false, primary: false },
+      ],
+      foreignKeys: [
+        {
+          name: 'fk_users_team',
+          columns: 'team_id',
+          referencedTable: 'teams',
+          referencedColumns: ['id'],
+        },
+      ],
+      primaryKey: ['id'],
+      rowIdAvailable: false,
+    }, table);
+
+    expect(result.structure.indexes[0]?.columns).toEqual(['name']);
+    expect(result.structure.foreignKeys[0]?.columns).toEqual(['team_id']);
+    expect(result.malformedFields).toEqual([
+      'index "idx_users_name".columns',
+      'foreign key "fk_users_team".columns',
+    ]);
+  });
+
+  it('returns safe empty metadata when structure collections are malformed', () => {
+    const result = normalizeStructureLists({
+      table,
+      columns: {},
+      indexes: null,
+      foreignKeys: 'unexpected',
+      primaryKey: false,
+      rowIdAvailable: 'yes',
+    }, table);
+
+    expect(result.structure).toMatchObject({
+      table,
+      columns: [],
+      indexes: [],
+      foreignKeys: [],
+      primaryKey: [],
+      rowIdAvailable: false,
+    });
+    expect(result.malformedFields).toEqual([
+      'rowIdAvailable',
+      'columns',
+      'indexes',
+      'foreignKeys',
+      'primaryKey',
+    ]);
+  });
+});
 
 describe('identifiers', () => {
   it('quotes identifiers for every dialect', () => {

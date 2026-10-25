@@ -2,7 +2,7 @@
   "name": "dbv",
   "displayName": "DBV — Database Viewer & SQL Workbench",
   "description": "Open-source database explorer, SQL workbench and data editor for VS Code and VSCodium. SQLite, PostgreSQL, MySQL/MariaDB and SQL Server.",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "publisher": "nighty3098",
   "license": "MIT",
   "repository": {

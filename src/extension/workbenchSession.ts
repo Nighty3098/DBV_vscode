@@ -14,6 +14,7 @@ import type { Driver } from './drivers/base';
 import type { ConnectionService } from './connectionService';
 import type { QueryHistoryStore } from './historyStore';
 import { exportResult } from '../core/serialization';
+import { normalizeStructureLists } from '../core/structure';
 import { logger } from './logger';
 
 export interface FixedConnection {
@@ -244,6 +245,15 @@ export class WorkbenchSession implements vscode.Disposable {
           await vscode.env.clipboard.writeText(message.text);
           this.notify('success', 'Copied to clipboard');
           break;
+        case 'webviewError': {
+          const webviewError = new Error(message.message);
+          if (message.stack) webviewError.stack = message.stack;
+          logger.error(
+            `Webview ${message.source} error: ${message.message}${message.componentStack ? `\nComponent stack:${message.componentStack}` : ''}`,
+            webviewError,
+          );
+          break;
+        }
         case 'openDocs':
           await vscode.commands.executeCommand('dbv.openDocs');
           break;
@@ -263,7 +273,11 @@ export class WorkbenchSession implements vscode.Disposable {
           break;
       }
     } catch (error) {
-      logger.error(`Webview action "${message.type}" failed`, error);
+      const detail =
+        message.type === 'loadStructure'
+          ? ` for table "${message.table.name}"`
+          : '';
+      logger.error(`Webview action "${message.type}"${detail} failed`, error);
       const text = errorMessage(error);
       if (request.requestId) this.post({ type: 'requestError', requestId: request.requestId, message: text });
       else this.notify('error', text);
@@ -285,7 +299,17 @@ export class WorkbenchSession implements vscode.Disposable {
 
   private async loadStructure(message: Extract<WebviewMessage, { type: 'loadStructure' }>): Promise<void> {
     const { driver } = await this.resolveDriver();
-    const structure = await driver.getStructure(message.table);
+    const result = normalizeStructureLists(
+      await driver.getStructure(message.table),
+      message.table,
+    );
+    if (result.malformedFields.length) {
+      logger.warn(
+        `Malformed structure metadata for table "${message.table.name}"`,
+        new Error(result.malformedFields.join('\n')),
+      );
+    }
+    const { structure } = result;
     this.post({ type: 'structure', requestId: message.requestId, structure });
   }
 

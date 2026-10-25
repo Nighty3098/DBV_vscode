@@ -14,16 +14,15 @@ import type {
   TablePage,
   TableRef,
   TableStructure,
-  WebviewMessage,
   ExportFormat,
 } from "../shared/types";
 import { FILTER_OPERATORS } from "../core/queryBuilder";
 import { primaryKeyOf, parseInputValue } from "../core/mutations";
 import { cellToDisplay, formatValueForExport } from "../core/serialization";
+import { normalizeStructureLists } from "../core/structure";
 import { SqlCodeEditor, type SqlEditorHandle } from "./SqlCodeEditor";
 import { Icon, type IconName } from "./Icon";
-
-const vscode = acquireVsCodeApi<{ mode?: string }>();
+import { post, reportWebviewError } from "./webviewBridge";
 
 const TOAST_ICONS: Record<string, IconName> = {
   success: "check",
@@ -31,10 +30,6 @@ const TOAST_ICONS: Record<string, IconName> = {
   error: "alert-circle",
   info: "info",
 };
-
-function post(message: WebviewMessage): void {
-  vscode.postMessage(message);
-}
 
 type Tab = "data" | "structure" | "query" | "history";
 
@@ -247,11 +242,24 @@ export function App(): React.ReactElement {
           });
           if (message.page.total !== null) setKnownTotal(message.page.total);
           break;
-        case "structure":
+        case "structure": {
           if (message.requestId !== structureRequest.current) break;
-          setStructure(message.structure);
+          const normalizedStructure = normalizeStructureLists(
+            message.structure,
+            selectedTableRef.current ?? { name: "(unknown)", type: "table" },
+          );
+          if (normalizedStructure.malformedFields.length) {
+            reportWebviewError(
+              "runtime",
+              new Error(
+                `Malformed structure metadata received by webview: ${normalizedStructure.malformedFields.join(", ")}`,
+              ),
+            );
+          }
+          setStructure(normalizedStructure.structure);
           setStructureLoading(false);
           break;
+        }
         case "queryResult":
           if (message.requestId !== queryRequest.current) break;
           setQueryResult(message.result);
@@ -1730,9 +1738,3 @@ export function App(): React.ReactElement {
     </div>
   );
 }
-
-declare function acquireVsCodeApi<T>(): {
-  postMessage(message: unknown): void;
-  getState(): T | undefined;
-  setState(state: T): void;
-};
