@@ -4,6 +4,24 @@ All notable changes to DBV are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.2.10] - 2026-11-07
+
+### Added
+
+- First public release on the VS Code Marketplace and Eclipse Open VSX (`nighty3098.dbv`).
+- Floating VS Code-style workbench layout for the SQL editor and table browser.
+- Error, warning, and startup logging to the **DBV** output channel and to `dbv_code.log` in the operating system's temporary directory.
+- VS Code Marketplace and Open VSX publishing metadata, gallery banner, and release automation.
+- Screenshots are bundled with the extension so the README renders consistently in VS Code, VSCodium, and both registries.
+
+### Changed
+
+- Removed the legacy sidebar and extra borders/shadows for a more native editor look.
+
+### Fixed
+
+- Guard against malformed database metadata when building the schema tree.
+
 ## [0.1.0] - 2026-10-24
 
 ### Added

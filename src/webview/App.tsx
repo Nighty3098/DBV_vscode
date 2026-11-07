@@ -9,7 +9,6 @@ import type {
   QueryHistoryEntry,
   QueryResult,
   Row,
-  SchemaInfo,
   SortSpec,
   TablePage,
   TableRef,
@@ -61,11 +60,6 @@ export function App(): React.ReactElement {
   const [init, setInit] = useState<InitData>();
   const [connections, setConnections] = useState<ConnectionSummary[]>([]);
   const [activeConnectionId, setActiveConnectionId] = useState<string>();
-  const [catalog, setCatalog] = useState<SchemaInfo[]>([]);
-  const [catalogFilter, setCatalogFilter] = useState("");
-  const [expandedSchemas, setExpandedSchemas] = useState<Set<string>>(
-    new Set(),
-  );
   const [selectedTable, setSelectedTable] = useState<TableRef>();
   const [tab, setTab] = useState<Tab>("query");
   const [page, setPage] = useState<TablePage>();
@@ -98,7 +92,6 @@ export function App(): React.ReactElement {
   const [toasts, setToasts] = useState<
     Array<{ id: number; kind: string; message: string }>
   >([]);
-  const [catalogLoading, setCatalogLoading] = useState(false);
 
   const sqlEditorRef = useRef<SqlEditorHandle>(null);
   const pageRequest = useRef("");
@@ -220,14 +213,6 @@ export function App(): React.ReactElement {
           setConnections(message.connections);
           setActiveConnectionId(message.activeConnectionId);
           break;
-        case "catalog":
-          setCatalog(message.schemas);
-          setCatalogLoading(false);
-          setExpandedSchemas((current) => {
-            if (current.size) return current;
-            return new Set(message.schemas.map((schema) => schema.name));
-          });
-          break;
         case "tablePage":
           if (message.requestId !== pageRequest.current) break;
           setPage(message.page);
@@ -301,13 +286,6 @@ export function App(): React.ReactElement {
               );
               if (tab === "structure") loadStructure(table, false);
             }
-            if (
-              message.operation === "drop" ||
-              message.operation === "truncate"
-            ) {
-              setCatalogLoading(true);
-              post({ type: "refreshCatalog" });
-            }
           }
           break;
         case "busy":
@@ -361,39 +339,10 @@ export function App(): React.ReactElement {
     }
   }, [selectedTable, init, page, pageLoading, loadPage]);
 
-  const chooseTable = (table: TableRef) => {
-    const changing =
-      selectedTable?.schema !== table.schema ||
-      selectedTable?.name !== table.name;
-    setSelectedTable(table);
-    setTab("data");
-    setPage(undefined);
-    setKnownTotal(null);
-    if (changing) {
-      setSort(undefined);
-      setFilters([]);
-      setFilterDrafts([]);
-      setStructure(undefined);
-    }
-    setPageOffset(0);
-    loadPage(
-      table,
-      0,
-      pageLimitRef.current,
-      changing ? undefined : sort,
-      changing ? [] : filters,
-    );
-  };
-
   const refresh = () => {
     if (!selectedTable) return;
     loadPage(selectedTable, pageOffset, pageLimit, sort, filters);
     if (tab === "structure") loadStructure(selectedTable, false);
-  };
-
-  const refreshCatalog = () => {
-    setCatalogLoading(true);
-    post({ type: "refreshCatalog" });
   };
 
   const applySort = (column: string) => {

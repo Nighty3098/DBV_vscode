@@ -1,22 +1,44 @@
 <div align="center">
 
-<img src="media/icon.png" width="150px" />
+<img src="media/icon.png" width="150px" alt="DBV icon" />
 
 <br /><br />
 
-<img src="./1.png" />
-<img src="./2.png" />
-<img src="./3.png" />
-<img src="./4.png" />
+<img src="media/screenshots/1.png" alt="DBV database explorer and table browser" />
+<img src="media/screenshots/2.png" alt="DBV SQL workbench with a query editor" />
+<img src="media/screenshots/3.png" alt="DBV connection manager and schema explorer" />
+<img src="media/screenshots/4.png" alt="DBV table editor with filters and pagination" />
 
 # DBV — Database Viewer & SQL Workbench
 
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/nighty3098.dbv.svg)](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv)
+[![Open VSX](https://img.shields.io/open-vsx/v/nighty3098/dbv.svg)](https://open-vsx.org/extension/nighty3098/dbv)
 [![CI](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 DBV is a free, open-source database explorer for **VS Code** and **VSCodium**. It opens SQLite files as rich visual editors, keeps saved server connections, runs SQL, browses huge tables with server-side pagination, and edits records safely. No paid tiers, telemetry, accounts, or proprietary services.
 
 </div>
+
+## Install
+
+DBV is published to the VS Code Marketplace and Open VSX, so it works in VS Code, VSCodium, code-server, Gitpod, and other Open VSX clients.
+
+- **VS Code:** install [DBV from the Marketplace](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv), or run:
+
+  ```bash
+  code --install-extension nighty3098.dbv
+  ```
+
+- **VSCodium / Open VSX:** install [DBV from Open VSX](https://open-vsx.org/extension/nighty3098/dbv), or run:
+
+  ```bash
+  codium --install-extension nighty3098.dbv
+  ```
+
+- **VSIX:** download the latest `dbv-<version>.vsix` from [GitHub Releases](https://github.com/Nighty3098/DBV_vscode/releases), then use **Extensions: Install from VSIX…**.
+
+DBV requires VS Code **1.105 or newer** (Node.js 22.17+ in the extension host) because SQLite support uses the built-in `node:sqlite` module. Remote SSH, WSL, and dev containers are supported through the `workspace` extension kind.
 
 ## Highlights
 
@@ -43,7 +65,7 @@ DBV is a free, open-source database explorer for **VS Code** and **VSCodium**. I
 
 ## Quick start
 
-1. Install the extension from a VSIX (`Extensions: Install from VSIX…`).
+1. Install DBV from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv) or [Open VSX](https://open-vsx.org/extension/nighty3098/dbv), or from a VSIX.
 2. Open a `.db`/`.sqlite` file, or use the DBV activity-bar icon to add a connection.
 3. For a server, choose the engine, host, port, database, user, password, and SSL mode.
 4. Browse a table in the explorer, double-click a cell to edit it, or open **Query** to run SQL.
@@ -113,13 +135,13 @@ tests/               Core unit tests + real SQLite integration tests
 ```bash
 npm ci
 npm run build       # bundle extension, webview, CSS
-npm test            # 25 tests
+npm test            # 29 tests
 npm run test:coverage
 npm run compile     # TypeScript check
-npm run package
+npm run package     # produce dbv-<version>.vsix
 ```
 
-Press `F5` to launch the Extension Development Host. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Press `F5` to launch the Extension Development Host. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [docs/PUBLISHING.md](docs/PUBLISHING.md) for the release checklist for both registries.
 
 ### Test coverage
 

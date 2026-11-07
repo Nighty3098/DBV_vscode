@@ -104,6 +104,113 @@ describe('table structure metadata', () => {
       'primaryKey',
     ]);
   });
+
+  it('returns safe empty metadata for non-object structure payloads', () => {
+    const result = normalizeStructureLists(null, table);
+
+    expect(result.structure).toEqual({
+      table,
+      columns: [],
+      indexes: [],
+      foreignKeys: [],
+      primaryKey: [],
+      rowIdAvailable: false,
+    });
+    expect(result.malformedFields).toEqual(['structure']);
+  });
+
+  it('skips invalid entries and normalizes partially malformed metadata', () => {
+    const result = normalizeStructureLists(
+      {
+        table: { name: 42, type: 'table' },
+        columns: [
+          null,
+          {
+            name: 'id',
+            dataType: 'INTEGER',
+            nullable: 'no',
+            defaultValue: 1,
+            primaryKey: 'yes',
+            autoIncrement: 'yes',
+            ordinal: 'first',
+          },
+          {
+            name: 'name',
+            dataType: 'TEXT',
+            nullable: true,
+            defaultValue: null,
+            primaryKey: false,
+            autoIncrement: false,
+            ordinal: 2,
+          },
+        ],
+        indexes: [
+          null,
+          { name: 'idx_flags', columns: ['a'], unique: 'no', primary: 'no' },
+          { name: 'idx_ok', columns: ['a', 1, 'b'], unique: true, primary: false },
+        ],
+        foreignKeys: [
+          null,
+          {
+            name: 'fk_missing_target',
+            columns: ['a'],
+            referencedTable: 7,
+            referencedColumns: ['id'],
+            referencedSchema: 7,
+            onDelete: 1,
+            onUpdate: 2,
+          },
+          {
+            name: 'fk_ok',
+            columns: ['a'],
+            referencedTable: 'teams',
+            referencedColumns: ['id'],
+            referencedSchema: 'public',
+            onDelete: 'CASCADE',
+            onUpdate: 'RESTRICT',
+          },
+        ],
+        primaryKey: 'id',
+        rowIdAvailable: true,
+        ddl: 5,
+      },
+      table,
+    );
+
+    expect(result.structure.table).toBe(table);
+    expect(result.structure.columns).toHaveLength(2);
+    expect(result.structure.columns[0]).toMatchObject({
+      name: 'id',
+      nullable: false,
+      defaultValue: null,
+      primaryKey: false,
+      autoIncrement: false,
+      ordinal: 2,
+    });
+    expect(result.structure.indexes).toHaveLength(2);
+    expect(result.structure.indexes[1]?.columns).toEqual(['a', 'b']);
+    expect(result.structure.foreignKeys).toHaveLength(2);
+    expect(result.structure.foreignKeys[1]).toMatchObject({
+      referencedSchema: 'public',
+      referencedTable: 'teams',
+      onDelete: 'CASCADE',
+      onUpdate: 'RESTRICT',
+    });
+    expect(result.structure.primaryKey).toEqual(['id']);
+    expect(result.structure.rowIdAvailable).toBe(true);
+    expect(result.structure.ddl).toBeUndefined();
+    expect(result.malformedFields).toEqual([
+      'table',
+      'columns[0]',
+      'column "id" metadata',
+      'indexes[0]',
+      'index "idx_flags" flags',
+      'index "idx_ok".columns',
+      'foreignKeys[0]',
+      'foreign key "fk_missing_target".referencedTable',
+      'primaryKey',
+    ]);
+  });
 });
 
 describe('identifiers', () => {

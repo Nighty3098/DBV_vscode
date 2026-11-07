@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to VS Code Marketplace and Open VSX
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release and attach the VSIX
+      id-token: write # VS Code Marketplace trusted publishing (OIDC)
+    env:
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify tag matches package version
+        run: |
+          node -e '
+            const { version } = require("./package.json");
+            const tag = process.env.GITHUB_REF_NAME.replace(/^v/, "");
+            if (tag !== version) {
+              console.error(`Tag ${process.env.GITHUB_REF_NAME} does not match package.json version ${version}.`);
+              process.exit(1);
+            }
+          '
+
+      - name: Type-check
+        run: npm run compile
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Package VSIX
+        run: npm run package -- --out dbv.vsix
+
+      - name: Inspect package contents
+        run: npx --yes @vscode/vsce ls --no-dependencies
+
+      - name: Publish to VS Code Marketplace (trusted publishing)
+        run: npx --yes @vscode/vsce publish --packagePath dbv.vsix --oidc --skip-duplicate
+
+      - name: Publish to Open VSX
+        run: |
+          if [ -n "${OVSX_PAT:-}" ]; then
+            npx --yes ovsx publish dbv.vsix --pat "$OVSX_PAT" --skip-duplicate
+          else
+            npx --yes ovsx publish dbv.vsix --trusted-publishing --skip-duplicate
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dbv.vsix \
+            --title "DBV $GITHUB_REF_NAME" \
+            --generate-notes \
+            || gh release upload "$GITHUB_REF_NAME" dbv.vsix --clobber

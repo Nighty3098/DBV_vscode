@@ -85,6 +85,10 @@ docs: document sqlite editor setup
 - Confirm `npm run check` and `npm run build` pass.
 - Never include secrets or customer data in issues or pull requests.
 
+## Releasing
+
+Only maintainers publish releases. The release process covers the VS Code Marketplace and Eclipse Open VSX, uses GitHub OIDC where possible, and verifies that the git tag matches `package.json`. See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the checklist, account setup, and troubleshooting.
+
 ## Reporting bugs
 
 Include:

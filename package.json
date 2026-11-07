@@ -4,7 +4,9 @@
   "description": "Open-source database explorer, SQL workbench and data editor for VS Code and VSCodium. SQLite, PostgreSQL, MySQL/MariaDB and SQL Server.",
   "version": "0.2.10",
   "publisher": "nighty3098",
+  "author": "Artem (Nighty3098)",
   "license": "MIT",
+  "pricing": "Free",
   "repository": {
     "type": "git",
     "url": "https://github.com/Nighty3098/DBV_vscode.git"
@@ -24,17 +26,37 @@
     "database",
     "sqlite",
     "postgres",
+    "postgresql",
     "mysql",
+    "mariadb",
     "mssql",
+    "sql-server",
     "sql",
+    "sql-editor",
+    "database-gui",
+    "data-editor",
     "dbeaver",
-    "viewer"
+    "viewer",
+    "vscodium"
   ],
   "extensionKind": [
     "workspace"
   ],
   "main": "./dist/extension.js",
   "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#141F34",
+    "theme": "dark"
+  },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "DBV needs a local filesystem and a Node.js extension host to open SQLite files and connect to database servers."
+    }
+  },
   "files": [
     "dist",
     "media",
@@ -323,7 +345,10 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",
     "compile": "tsc --noEmit",
-    "package": "npm run build && npx --yes @vscode/vsce package --no-dependencies",
+    "vscode:prepublish": "npm run build",
+    "package": "npx --yes @vscode/vsce package --no-dependencies",
+    "publish:marketplace": "npx --yes @vscode/vsce publish --no-dependencies",
+    "publish:openvsx": "npm run build && npx --yes ovsx publish --no-dependencies",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
