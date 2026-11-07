@@ -4,15 +4,27 @@ All notable changes to DBV are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.2.11] - 2026-11-07
+
+### Changed
+
+- Publishing now targets Eclipse Open VSX only. VS Code users install the versioned VSIX attached to GitHub Releases.
+- README install instructions and badges reflect the Open VSX-only distribution.
+- The release workflow publishes to Open VSX with `OVSX_PAT` or trusted publishing, attaches `dbv-<version>.vsix` to the GitHub release, and no longer depends on the VS Code Marketplace publisher.
+
+### Fixed
+
+- Release automation no longer fails when the VS Code Marketplace publisher is not configured.
+
 ## [0.2.10] - 2026-11-07
 
 ### Added
 
-- First public release on the VS Code Marketplace and Eclipse Open VSX (`nighty3098.dbv`).
+- First public release on Eclipse Open VSX (`nighty3098.dbv`) for VSCodium and other Open VSX clients. VS Code users install the VSIX from GitHub Releases.
 - Floating VS Code-style workbench layout for the SQL editor and table browser.
 - Error, warning, and startup logging to the **DBV** output channel and to `dbv_code.log` in the operating system's temporary directory.
-- VS Code Marketplace and Open VSX publishing metadata, gallery banner, and release automation.
-- Screenshots are bundled with the extension so the README renders consistently in VS Code, VSCodium, and both registries.
+- Open VSX publishing metadata, gallery banner, and release automation.
+- Screenshots are bundled with the extension so the README renders consistently in VS Code, VSCodium, and on Open VSX.
 
 ### Changed
 

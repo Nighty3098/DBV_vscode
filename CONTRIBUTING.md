@@ -87,7 +87,7 @@ docs: document sqlite editor setup
 
 ## Releasing
 
-Only maintainers publish releases. The release process covers the VS Code Marketplace and Eclipse Open VSX, uses GitHub OIDC where possible, and verifies that the git tag matches `package.json`. See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the checklist, account setup, and troubleshooting.
+Only maintainers publish releases. The release process publishes to Eclipse Open VSX for VSCodium and other forks, attaches the same VSIX to a GitHub release for VS Code users, uses GitHub OIDC where possible, and verifies that the git tag matches `package.json`. See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the checklist, account setup, and troubleshooting.
 
 ## Reporting bugs
 

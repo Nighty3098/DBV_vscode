@@ -11,7 +11,6 @@
 
 # DBV — Database Viewer & SQL Workbench
 
-[![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/nighty3098.dbv.svg)](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv)
 [![Open VSX](https://img.shields.io/open-vsx/v/nighty3098/dbv.svg)](https://open-vsx.org/extension/nighty3098/dbv)
 [![CI](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/Nighty3098/DBV_vscode/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -22,13 +21,7 @@ DBV is a free, open-source database explorer for **VS Code** and **VSCodium**. I
 
 ## Install
 
-DBV is published to the VS Code Marketplace and Open VSX, so it works in VS Code, VSCodium, code-server, Gitpod, and other Open VSX clients.
-
-- **VS Code:** install [DBV from the Marketplace](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv), or run:
-
-  ```bash
-  code --install-extension nighty3098.dbv
-  ```
+DBV is published to **Eclipse Open VSX**, the default registry for VSCodium, code-server, Gitpod, Theia, and other VS Code forks. VS Code users can install the same VSIX from GitHub Releases.
 
 - **VSCodium / Open VSX:** install [DBV from Open VSX](https://open-vsx.org/extension/nighty3098/dbv), or run:
 
@@ -36,7 +29,13 @@ DBV is published to the VS Code Marketplace and Open VSX, so it works in VS Code
   codium --install-extension nighty3098.dbv
   ```
 
-- **VSIX:** download the latest `dbv-<version>.vsix` from [GitHub Releases](https://github.com/Nighty3098/DBV_vscode/releases), then use **Extensions: Install from VSIX…**.
+- **VS Code / any VS Code fork:** download the latest `dbv-<version>.vsix` from [GitHub Releases](https://github.com/Nighty3098/DBV_vscode/releases), then run:
+
+  ```bash
+  code --install-extension dbv-<version>.vsix
+  ```
+
+  Alternatively, use **Extensions: Install from VSIX…** in the Extensions view.
 
 DBV requires VS Code **1.105 or newer** (Node.js 22.17+ in the extension host) because SQLite support uses the built-in `node:sqlite` module. Remote SSH, WSL, and dev containers are supported through the `workspace` extension kind.
 
@@ -65,7 +64,7 @@ DBV requires VS Code **1.105 or newer** (Node.js 22.17+ in the extension host) b
 
 ## Quick start
 
-1. Install DBV from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=nighty3098.dbv) or [Open VSX](https://open-vsx.org/extension/nighty3098/dbv), or from a VSIX.
+1. Install DBV from [Open VSX](https://open-vsx.org/extension/nighty3098/dbv) (VSCodium and forks), or from a VSIX (VS Code).
 2. Open a `.db`/`.sqlite` file, or use the DBV activity-bar icon to add a connection.
 3. For a server, choose the engine, host, port, database, user, password, and SSL mode.
 4. Browse a table in the explorer, double-click a cell to edit it, or open **Query** to run SQL.

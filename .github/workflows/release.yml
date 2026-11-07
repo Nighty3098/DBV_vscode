@@ -14,11 +14,11 @@ concurrency:
 
 jobs:
   publish:
-    name: Publish to VS Code Marketplace and Open VSX
+    name: Publish to Open VSX
     runs-on: ubuntu-latest
     permissions:
       contents: write # create the GitHub release and attach the VSIX
-      id-token: write # VS Code Marketplace trusted publishing (OIDC)
+      id-token: write # Open VSX trusted publishing (OIDC)
     env:
       OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
@@ -60,9 +60,6 @@ jobs:
       - name: Inspect package contents
         run: npx --yes @vscode/vsce ls --no-dependencies
 
-      - name: Publish to VS Code Marketplace (trusted publishing)
-        run: npx --yes @vscode/vsce publish --packagePath dbv.vsix --oidc --skip-duplicate
-
       - name: Publish to Open VSX
         run: |
           if [ -n "${OVSX_PAT:-}" ]; then
@@ -71,11 +68,15 @@ jobs:
             npx --yes ovsx publish dbv.vsix --trusted-publishing --skip-duplicate
           fi
 
+      - name: Name release asset
+        run: mv dbv.vsix "dbv-${GITHUB_REF_NAME#v}.vsix"
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dbv.vsix \
+          ASSET="dbv-${GITHUB_REF_NAME#v}.vsix"
+          gh release create "$GITHUB_REF_NAME" "$ASSET" \
             --title "DBV $GITHUB_REF_NAME" \
             --generate-notes \
-            || gh release upload "$GITHUB_REF_NAME" dbv.vsix --clobber
+            || gh release upload "$GITHUB_REF_NAME" "$ASSET" --clobber
